@@ -1,6 +1,6 @@
 # Claude Code Config
 
-Portable configuration files for [Claude Code](https://claude.com/claude-code) and [Ghostty](https://ghostty.org) terminal. Clone this repo on any Mac and run `install.sh` to symlink everything into place.
+Portable configuration files for [Claude Code](https://claude.com/claude-code) and [Ghostty](https://ghostty.org) terminal. Clone this repo on any Mac and run `install.sh` to copy everything into place.
 
 ---
 
@@ -101,17 +101,30 @@ brew install git
 
 ```bash
 # 1. clone the repo
-git clone <YOUR_REPO_URL> ~/claude-code-config
+git clone https://github.com/micxu-prog/claude-code-config.git ~/claude-code-config
 cd ~/claude-code-config
 
 # 2. preview what will happen (no changes made)
 ./install.sh --dry-run
 
-# 3. actually install (creates symlinks, backs up existing files)
+# 3. actually install (copies files, backs up existing ones)
 ./install.sh
 ```
 
 That's it. Open Ghostty and run `claude` to verify everything works.
+
+### Copy vs Symlink mode
+
+The installer supports two modes:
+
+| Mode | Command | Best for |
+|------|---------|----------|
+| **Copy** (default) | `./install.sh` | New machines where you'll customize configs independently |
+| **Symlink** | `./install.sh --symlink` | Single machine where you want repo and live config always in sync |
+
+**Copy mode** (recommended for new machines): files are independent. Edit `~/.claude/settings.json` directly on that machine without affecting the repo. To pull upstream updates later: `git pull && ./install.sh`.
+
+**Symlink mode**: `~/.claude/settings.json` points directly at the repo file. Any edit to either location is the same file. `git pull` instantly updates your live config. But you can't have per-machine customizations without committing them.
 
 ---
 
@@ -126,26 +139,28 @@ mkdir -p ~/.claude/{agents,commands,scripts,skills}
 mkdir -p ~/.config/ghostty
 ```
 
-### Step 2: Copy or symlink each file
-
-For each file below, either copy it or create a symlink. Symlinks are recommended so that `git pull` automatically updates your config.
+### Step 2: Copy each file
 
 ```bash
-# symlink approach (recommended)
-ln -sf /path/to/claude-code-config/claude/CLAUDE.md ~/.claude/CLAUDE.md
-ln -sf /path/to/claude-code-config/claude/settings.json ~/.claude/settings.json
-ln -sf /path/to/claude-code-config/claude/settings.local.json ~/.claude/settings.local.json
-ln -sf /path/to/claude-code-config/claude/statusline-command.sh ~/.claude/statusline-command.sh
-ln -sf /path/to/claude-code-config/claude/agents/pdf-to-markdown.md ~/.claude/agents/pdf-to-markdown.md
-ln -sf /path/to/claude-code-config/claude/commands/chrome-js.md ~/.claude/commands/chrome-js.md
-ln -sf /path/to/claude-code-config/claude/scripts/confluence-update.py ~/.claude/scripts/confluence-update.py
-ln -sf /path/to/claude-code-config/claude/skills/snapshot-branch.md ~/.claude/skills/snapshot-branch.md
-ln -sf /path/to/claude-code-config/claude/skills/spec-interview.md ~/.claude/skills/spec-interview.md
-ln -sf /path/to/claude-code-config/claude/skills/verify-telemetry.md ~/.claude/skills/verify-telemetry.md
-ln -sf /path/to/claude-code-config/ghostty/config ~/.config/ghostty/config
+REPO=/path/to/claude-code-config  # replace with your actual clone path
+
+cp $REPO/claude/CLAUDE.md ~/.claude/CLAUDE.md
+cp $REPO/claude/settings.json ~/.claude/settings.json
+cp $REPO/claude/settings.local.json ~/.claude/settings.local.json
+cp $REPO/claude/statusline-command.sh ~/.claude/statusline-command.sh
+cp $REPO/claude/agents/pdf-to-markdown.md ~/.claude/agents/pdf-to-markdown.md
+cp $REPO/claude/commands/chrome-js.md ~/.claude/commands/chrome-js.md
+cp $REPO/claude/scripts/confluence-update.py ~/.claude/scripts/confluence-update.py
+cp $REPO/claude/skills/snapshot-branch.md ~/.claude/skills/snapshot-branch.md
+cp $REPO/claude/skills/spec-interview.md ~/.claude/skills/spec-interview.md
+cp $REPO/claude/skills/verify-telemetry.md ~/.claude/skills/verify-telemetry.md
+cp $REPO/ghostty/config ~/.config/ghostty/config
 ```
 
-Replace `/path/to/claude-code-config` with the actual path where you cloned this repo.
+Or use symlinks if you want live sync (see [Copy vs Symlink mode](#copy-vs-symlink-mode)):
+```bash
+# replace cp with ln -sf in the commands above
+```
 
 ### Step 3: Verify
 
@@ -489,42 +504,55 @@ Just use Claude Code normally. When it asks for permission to run a command and 
 
 ## Updating
 
-Since the installer uses symlinks, your live config files point directly into this repo.
+### If you used copy mode (default)
 
-**To push changes from this machine:**
-```bash
-cd ~/claude-code-config   # or wherever you cloned
-git add .
-git commit -m "update config"
-git push
-```
-
-**To pull changes on another machine:**
+Files are independent copies. To pull upstream changes:
 ```bash
 cd ~/claude-code-config
 git pull
-# symlinks auto-update -- no re-install needed
+./install.sh          # re-copies files, backs up your local versions as .bak
+```
+
+To push local changes back to the repo:
+```bash
+# copy the changed file back into the repo
+cp ~/.claude/settings.json ~/claude-code-config/claude/settings.json
+cd ~/claude-code-config
+git add . && git commit -m "update settings" && git push
+```
+
+### If you used symlink mode
+
+Live config points directly into the repo. Changes propagate instantly both ways.
+```bash
+# pull upstream changes (auto-updates live config)
+cd ~/claude-code-config
+git pull
+
+# push local changes (just commit, the file is already in the repo)
+cd ~/claude-code-config
+git add . && git commit -m "update settings" && git push
 ```
 
 ---
 
 ## Uninstall
 
-Remove all symlinks and restore backups:
+Remove installed files and restore backups:
 
 ```bash
-# remove symlinks
-rm ~/.claude/CLAUDE.md
-rm ~/.claude/settings.json
-rm ~/.claude/settings.local.json
-rm ~/.claude/statusline-command.sh
-rm ~/.claude/agents/pdf-to-markdown.md
-rm ~/.claude/commands/chrome-js.md
-rm ~/.claude/scripts/confluence-update.py
-rm ~/.claude/skills/snapshot-branch.md
-rm ~/.claude/skills/spec-interview.md
-rm ~/.claude/skills/verify-telemetry.md
-rm ~/.config/ghostty/config
+# remove installed files (works for both copy and symlink mode)
+rm -f ~/.claude/CLAUDE.md
+rm -f ~/.claude/settings.json
+rm -f ~/.claude/settings.local.json
+rm -f ~/.claude/statusline-command.sh
+rm -f ~/.claude/agents/pdf-to-markdown.md
+rm -f ~/.claude/commands/chrome-js.md
+rm -f ~/.claude/scripts/confluence-update.py
+rm -f ~/.claude/skills/snapshot-branch.md
+rm -f ~/.claude/skills/spec-interview.md
+rm -f ~/.claude/skills/verify-telemetry.md
+rm -f ~/.config/ghostty/config
 
 # restore backups (if they exist)
 for f in ~/.claude/*.bak ~/.claude/**/*.bak ~/.config/ghostty/*.bak; do

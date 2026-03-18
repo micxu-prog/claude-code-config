@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-# install.sh -- symlink claude code config files into place on a fresh mac
-# usage: ./install.sh [--dry-run]
+# install.sh -- install claude code config files on a fresh mac
+# usage: ./install.sh [--dry-run] [--symlink]
+#
+# default: copies files (independent, safe to diverge per-machine)
+# --symlink: symlinks instead (edits in repo propagate instantly)
 
 set -euo pipefail
 
@@ -9,9 +12,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$HOME/.claude"
 GHOSTTY_DIR="$HOME/.config/ghostty"
 DRY_RUN=false
+USE_SYMLINK=false
 
-if [[ "${1:-}" == "--dry-run" ]]; then
-    DRY_RUN=true
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run)  DRY_RUN=true ;;
+        --symlink)  USE_SYMLINK=true ;;
+    esac
+done
+
+if $DRY_RUN; then
     echo "[dry-run] no changes will be made"
     echo ""
 fi
@@ -22,7 +32,7 @@ warn()  { printf "\033[38;5;208m[warn]\033[0m  %s\n" "$1"; }
 ok()    { printf "\033[38;5;78m[ok]\033[0m    %s\n" "$1"; }
 err()   { printf "\033[38;5;196m[err]\033[0m   %s\n" "$1"; }
 
-link_file() {
+install_file() {
     local src="$1"
     local dst="$2"
 
@@ -45,15 +55,17 @@ link_file() {
 
     # back up existing file (skip if already a symlink to us)
     if [[ -e "$dst" || -L "$dst" ]]; then
-        local existing_target
-        existing_target="$(readlink "$dst" 2>/dev/null || echo "")"
-        if [[ "$existing_target" == "$src" ]]; then
-            ok "already linked: $dst"
-            return 0
+        if $USE_SYMLINK; then
+            local existing_target
+            existing_target="$(readlink "$dst" 2>/dev/null || echo "")"
+            if [[ "$existing_target" == "$src" ]]; then
+                ok "already linked: $dst"
+                return 0
+            fi
         fi
 
         if [[ -L "$dst" ]]; then
-            warn "replacing symlink: $dst -> $existing_target"
+            warn "replacing symlink: $dst"
         else
             if $DRY_RUN; then
                 info "would back up: $dst -> $dst.bak"
@@ -65,15 +77,29 @@ link_file() {
     fi
 
     if $DRY_RUN; then
-        info "would link: $dst -> $src"
+        if $USE_SYMLINK; then
+            info "would link: $dst -> $src"
+        else
+            info "would copy: $src -> $dst"
+        fi
     else
-        ln -sf "$src" "$dst"
-        ok "linked: $dst -> $src"
+        if $USE_SYMLINK; then
+            ln -sf "$src" "$dst"
+            ok "linked: $dst -> $src"
+        else
+            cp "$src" "$dst"
+            ok "copied: $src -> $dst"
+        fi
     fi
 }
 
 # ---- preflight checks ----
 echo "=== claude code config installer ==="
+if $USE_SYMLINK; then
+    info "mode: symlink (changes in repo propagate instantly)"
+else
+    info "mode: copy (independent files, safe to customize per-machine)"
+fi
 echo ""
 
 if [[ "$(uname)" != "Darwin" ]]; then
@@ -101,36 +127,36 @@ if [[ ${#missing[@]} -gt 0 ]]; then
     echo ""
 fi
 
-# ---- link claude config files ----
-info "linking claude code config files..."
+# ---- install claude config files ----
+info "installing claude code config files..."
 echo ""
 
 # core config
-link_file "$SCRIPT_DIR/claude/CLAUDE.md"              "$CLAUDE_DIR/CLAUDE.md"
-link_file "$SCRIPT_DIR/claude/settings.json"           "$CLAUDE_DIR/settings.json"
-link_file "$SCRIPT_DIR/claude/settings.local.json"     "$CLAUDE_DIR/settings.local.json"
-link_file "$SCRIPT_DIR/claude/statusline-command.sh"   "$CLAUDE_DIR/statusline-command.sh"
+install_file "$SCRIPT_DIR/claude/CLAUDE.md"              "$CLAUDE_DIR/CLAUDE.md"
+install_file "$SCRIPT_DIR/claude/settings.json"           "$CLAUDE_DIR/settings.json"
+install_file "$SCRIPT_DIR/claude/settings.local.json"     "$CLAUDE_DIR/settings.local.json"
+install_file "$SCRIPT_DIR/claude/statusline-command.sh"   "$CLAUDE_DIR/statusline-command.sh"
 
 # agents
-link_file "$SCRIPT_DIR/claude/agents/pdf-to-markdown.md" "$CLAUDE_DIR/agents/pdf-to-markdown.md"
+install_file "$SCRIPT_DIR/claude/agents/pdf-to-markdown.md" "$CLAUDE_DIR/agents/pdf-to-markdown.md"
 
 # commands
-link_file "$SCRIPT_DIR/claude/commands/chrome-js.md"   "$CLAUDE_DIR/commands/chrome-js.md"
+install_file "$SCRIPT_DIR/claude/commands/chrome-js.md"   "$CLAUDE_DIR/commands/chrome-js.md"
 
 # scripts
-link_file "$SCRIPT_DIR/claude/scripts/confluence-update.py" "$CLAUDE_DIR/scripts/confluence-update.py"
+install_file "$SCRIPT_DIR/claude/scripts/confluence-update.py" "$CLAUDE_DIR/scripts/confluence-update.py"
 
 # skills
-link_file "$SCRIPT_DIR/claude/skills/snapshot-branch.md"   "$CLAUDE_DIR/skills/snapshot-branch.md"
-link_file "$SCRIPT_DIR/claude/skills/spec-interview.md"    "$CLAUDE_DIR/skills/spec-interview.md"
-link_file "$SCRIPT_DIR/claude/skills/verify-telemetry.md"  "$CLAUDE_DIR/skills/verify-telemetry.md"
+install_file "$SCRIPT_DIR/claude/skills/snapshot-branch.md"   "$CLAUDE_DIR/skills/snapshot-branch.md"
+install_file "$SCRIPT_DIR/claude/skills/spec-interview.md"    "$CLAUDE_DIR/skills/spec-interview.md"
+install_file "$SCRIPT_DIR/claude/skills/verify-telemetry.md"  "$CLAUDE_DIR/skills/verify-telemetry.md"
 
 echo ""
 
-# ---- link ghostty config ----
-info "linking ghostty config..."
+# ---- install ghostty config ----
+info "installing ghostty config..."
 echo ""
-link_file "$SCRIPT_DIR/ghostty/config" "$GHOSTTY_DIR/config"
+install_file "$SCRIPT_DIR/ghostty/config" "$GHOSTTY_DIR/config"
 
 echo ""
 
@@ -146,10 +172,13 @@ fi
 echo "=== installation complete ==="
 echo ""
 info "notes:"
-echo "  - edit files in this repo; symlinks propagate changes instantly"
+if $USE_SYMLINK; then
+    echo "  - edit files in this repo; symlinks propagate changes instantly"
+    echo "  - to sync: git pull (symlinks auto-update)"
+else
+    echo "  - files are independent copies -- edit them directly on this machine"
+    echo "  - to pull upstream changes: git pull && ./install.sh"
+fi
 echo "  - settings.local.json permissions auto-accumulate as you use claude code"
 echo "  - confluence-update.py: update USER variable for your email"
 echo "  - verify-telemetry skill needs ~/.claude/hooks/verify-telemetry.sh"
-echo ""
-info "to sync changes: git add . && git commit && git push"
-info "on other machine: git pull (symlinks auto-update)"
