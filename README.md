@@ -1,0 +1,613 @@
+# Claude Code Config
+
+Portable configuration files for [Claude Code](https://claude.com/claude-code) and [Ghostty](https://ghostty.org) terminal. Clone this repo on any Mac and run `install.sh` to copy everything into place.
+
+---
+
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Quick Install](#quick-install)
+- [Manual Install](#manual-install)
+- [File Reference](#file-reference)
+  - [CLAUDE.md](#claudemd)
+  - [settings.json](#settingsjson)
+  - [settings.local.json](#settingslocaljson)
+  - [statusline-command.sh](#statusline-commandsh)
+  - [ccusage-compact](#ccusage-compact)
+  - [Agents](#agents)
+  - [Commands](#commands)
+  - [Scripts](#scripts)
+  - [Skills](#skills)
+  - [Ghostty Config](#ghostty-config)
+- [Ghostty SAND Keybindings](#ghostty-sand-keybindings)
+- [Customization](#customization)
+- [Updating](#updating)
+- [Uninstall](#uninstall)
+- [Troubleshooting](#troubleshooting)
+
+---
+
+## Prerequisites
+
+Make sure these are installed before running the installer.
+
+### 1. Homebrew (package manager)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+After install, follow the instructions to add Homebrew to your PATH (it prints them at the end).
+
+### 2. Node.js (for Claude Code CLI)
+
+```bash
+brew install node
+```
+
+Verify: `node --version` should print a version number (v20+ recommended).
+
+### 3. Claude Code CLI
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+Verify: `claude --version` should print a version number.
+
+After installing, run `claude` once to complete the initial authentication flow. It will open a browser window to log in to your Anthropic account.
+
+### 4. Ghostty Terminal
+
+Download from [ghostty.org](https://ghostty.org) and drag to Applications.
+
+Alternatively, if you have Homebrew:
+```bash
+brew install --cask ghostty
+```
+
+Verify: open Ghostty from Applications, or run `/Applications/Ghostty.app/Contents/MacOS/ghostty --version`.
+
+### 5. JetBrains Mono Nerd Font
+
+The Ghostty config uses this font. Without it, you'll see fallback fonts.
+
+```bash
+brew install --cask font-jetbrains-mono-nerd-font
+```
+
+Verify: open Font Book (Cmd+Space, type "Font Book") and search for "JetBrains". You should see "JetBrainsMono Nerd Font".
+
+### 6. jq (JSON processor)
+
+Used by the statusline script to parse Claude Code's context data.
+
+```bash
+brew install jq
+```
+
+Verify: `jq --version` should print a version number.
+
+### 7. Git
+
+macOS ships with Git, but you can get a newer version:
+```bash
+brew install git
+```
+
+---
+
+## Quick Install
+
+```bash
+# 1. clone the repo
+git clone https://github.com/michaelxu2288/claude-code-config.git ~/claude-code-config
+cd ~/claude-code-config
+
+# 2. preview what will happen (no changes made)
+./install.sh --dry-run
+
+# 3. actually install (copies files, backs up existing ones)
+./install.sh
+```
+
+That's it. Open Ghostty and run `claude` to verify everything works.
+
+### Copy vs Symlink mode
+
+The installer supports two modes:
+
+| Mode | Command | Best for |
+|------|---------|----------|
+| **Copy** (default) | `./install.sh` | New machines where you'll customize configs independently |
+| **Symlink** | `./install.sh --symlink` | Single machine where you want repo and live config always in sync |
+
+**Copy mode** (recommended for new machines): files are independent. Edit `~/.claude/settings.json` directly on that machine without affecting the repo. To pull upstream updates later: `git pull && ./install.sh`.
+
+**Symlink mode**: `~/.claude/settings.json` points directly at the repo file. Any edit to either location is the same file. `git pull` instantly updates your live config. But you can't have per-machine customizations without committing them.
+
+---
+
+## Manual Install
+
+If you prefer to set things up by hand instead of using the installer script.
+
+### Step 1: Create directories
+
+```bash
+mkdir -p ~/.claude/{agents,commands,scripts,skills}
+mkdir -p ~/.config/ghostty
+```
+
+### Step 2: Copy each file
+
+```bash
+REPO=/path/to/claude-code-config  # replace with your actual clone path
+
+cp $REPO/claude/CLAUDE.md ~/.claude/CLAUDE.md
+cp $REPO/claude/settings.json ~/.claude/settings.json
+cp $REPO/claude/settings.local.json ~/.claude/settings.local.json
+cp $REPO/claude/statusline-command.sh ~/.claude/statusline-command.sh
+cp $REPO/claude/ccusage-compact.py ~/.claude/ccusage-compact.py
+cp $REPO/claude/ccusage-compact.sh ~/.claude/ccusage-compact.sh
+cp $REPO/claude/agents/pdf-to-markdown.md ~/.claude/agents/pdf-to-markdown.md
+cp $REPO/claude/commands/chrome-js.md ~/.claude/commands/chrome-js.md
+cp $REPO/claude/scripts/confluence-update.py ~/.claude/scripts/confluence-update.py
+cp $REPO/claude/skills/snapshot-branch.md ~/.claude/skills/snapshot-branch.md
+cp $REPO/claude/skills/spec-interview.md ~/.claude/skills/spec-interview.md
+cp $REPO/ghostty/config ~/.config/ghostty/config
+```
+
+Or use symlinks if you want live sync (see [Copy vs Symlink mode](#copy-vs-symlink-mode)):
+```bash
+# replace cp with ln -sf in the commands above
+```
+
+### Step 3: Verify
+
+```bash
+ls -la ~/.claude/CLAUDE.md
+ls -la ~/.config/ghostty/config
+
+# test claude code starts
+claude --version
+
+# test ghostty config loads (if Ghostty is running, reload with Cmd+Shift+,)
+```
+
+---
+
+## File Reference
+
+### CLAUDE.md
+
+**Location:** `~/.claude/CLAUDE.md`
+**Purpose:** Global instructions Claude Code follows in every conversation, across all projects.
+
+This file defines:
+- **Identity**: your name and email (update this for your account)
+- **Preferences**: response style (concise, no emojis), safety guards (never auto-commit, never push without confirmation)
+- **Coding style**: clear code, lowercase comments except acronyms
+- **Acronym tracking**: how Claude appends unfamiliar acronyms to a desktop file
+
+**What to customize on a new machine:**
+- Update `Name:` with your email/name
+- Add any project-specific notes you want Claude to always know
+
+---
+
+### settings.json
+
+**Location:** `~/.claude/settings.json`
+**Purpose:** Core Claude Code settings -- model selection, plugins, statusline, hooks, and feature flags.
+
+Current configuration:
+```
+model: opus[1m]              -- uses Claude Opus with 1M context window
+alwaysThinkingEnabled: true  -- extended thinking always on
+effortLevel: high            -- high reasoning effort
+theme: dark-ansi             -- terminal-friendly dark theme
+```
+
+**Plugins enabled:**
+- `clangd-lsp@claude-plugins-official` -- C/C++ language server support
+
+**Hooks:**
+- `PostToolUse` (Edit) -- auto-runs `ruff check --fix` and `ruff format` on every edit to a `.py` file.
+
+**Statusline:** runs `statusline-command.sh` to show version, context %, model, directory, and git branch.
+
+**Environment variables:**
+- `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` -- enables experimental agent teams feature
+
+**What to customize:**
+- Model: change `"model"` to `"sonnet"` or `"haiku"` for cheaper/faster responses
+- Add plugins as you adopt them; remove `clangd-lsp` if you don't work with C/C++
+- The Python auto-lint hook is opt-in -- delete the `hooks` block if you don't use ruff
+
+---
+
+### settings.local.json
+
+**Location:** `~/.claude/settings.local.json`
+**Purpose:** Permission allowlists and sandbox configuration. Controls which tools Claude Code can use without asking for confirmation.
+
+**How it works:** When you approve a tool use in Claude Code (e.g., clicking "Allow" for a bash command), it gets added to the `permissions.allow` list. Over time this file grows as you use Claude Code. The version in this repo is a cleaned-up starting point with common permissions.
+
+**Sandbox settings:**
+```json
+"sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+}
+```
+This means bash commands run in a restricted sandbox by default, but are auto-approved since the sandbox prevents damage.
+
+**What to customize:**
+- You generally don't need to edit this file manually. Just use Claude Code and approve tools as needed -- the file grows automatically.
+
+---
+
+### statusline-command.sh
+
+**Location:** `~/.claude/statusline-command.sh`
+**Purpose:** Bash script that renders the colorful statusline at the bottom of Claude Code.
+
+**What it shows (left to right):**
+| Section | Color | Example |
+|---------|-------|---------|
+| Version | Blue | `V1.0.42` |
+| Context | Orange | `Context: 23%` |
+| Model | Purple | `(Opus 4.6 (1M context))` |
+| Directory | Green | `Dir: /Users/you/project` |
+| Git Branch | Yellow | `Branch: main` |
+| AutoYes | Green/Red | `AutoYes: ON` (only if active) |
+
+**Dependencies:** requires `jq` to parse the JSON input from Claude Code.
+
+**How to customize colors:** edit the ANSI color codes in the `# --- ANSI colors (256-color) ---` section. Use [256-color chart](https://www.ditig.com/256-colors-cheat-sheet) for reference.
+
+---
+
+### ccusage-compact
+
+**Location:** `~/.claude/ccusage-compact.{py,sh}`
+**Purpose:** Wraps `ccusage` (the Claude Code usage CLI) and prints a compacted view -- first N rows + last M rows -- so the daily-usage table stays readable in long sessions.
+
+**Usage:**
+```bash
+~/.claude/ccusage-compact.sh
+```
+
+The script invokes `npx ccusage@<version>` under the hood (`npx` will fetch it on first run). Edit `FIRST` / `LAST` at the top of the `.sh` to change how many rows show up.
+
+---
+
+### Agents
+
+#### pdf-to-markdown (`claude/agents/pdf-to-markdown.md`)
+
+**Location:** `~/.claude/agents/pdf-to-markdown.md`
+**Purpose:** Specialized sub-agent for converting PDF documents into faithful Markdown reproductions.
+
+**How to invoke:** Just ask Claude to convert a PDF:
+```
+convert this PDF to markdown: ~/Downloads/my-document.pdf
+```
+
+Claude automatically delegates to this agent. It handles:
+- Text extraction with structural fidelity (headings, lists, tables)
+- OCR for scanned PDFs or image-based content
+- Diagrams reproduced as Mermaid or ASCII art
+- Code blocks with proper language tags
+- Complete transcription -- never truncates or summarizes
+
+---
+
+### Commands
+
+#### chrome-js (`claude/commands/chrome-js.md`)
+
+**Location:** `~/.claude/commands/chrome-js.md`
+**Purpose:** Custom command to execute JavaScript in the frontmost Google Chrome tab via AppleScript.
+
+**How to invoke:**
+```
+/chrome-js
+```
+Then tell Claude what to extract from the page.
+
+**Common uses:**
+- Extract dropdown/select options from web forms
+- Scrape table data from a webpage
+- Run arbitrary JS in Chrome's console and get results back
+
+**Requirements:** Google Chrome must be open with the target page in the active tab.
+
+---
+
+### Scripts
+
+#### confluence-update.py (`claude/scripts/confluence-update.py`)
+
+**Location:** `~/.claude/scripts/confluence-update.py`
+**Purpose:** Converts Markdown to Confluence storage format (XHTML) and pushes it to a Confluence page via REST API.
+
+**Usage:**
+```bash
+python3 ~/.claude/scripts/confluence-update.py <page-id> <markdown-file> [--dry-run] [--output FILE] [--title TITLE]
+```
+
+**Examples:**
+```bash
+# preview the conversion without pushing
+python3 ~/.claude/scripts/confluence-update.py 12345 my-doc.md --dry-run --output preview.html
+
+# push to confluence
+python3 ~/.claude/scripts/confluence-update.py 12345 my-doc.md
+```
+
+**Auth setup:**
+1. Generate a Confluence API token at https://id.atlassian.com/manage-profile/security/api-tokens
+2. Save the token:
+   ```bash
+   mkdir -p ~/.config/confluence-update
+   echo "YOUR_TOKEN_HERE" > ~/.config/confluence-update/token
+   chmod 600 ~/.config/confluence-update/token
+   ```
+
+**Configuration via environment variables:**
+```bash
+export CONFLUENCE_BASE_URL="https://your-org.atlassian.net/wiki"
+export CONFLUENCE_USER="your.email@example.com"
+# optional: override the token path
+export CONFLUENCE_TOKEN_PATH="$HOME/.config/confluence-update/token"
+```
+
+If the env vars aren't set, the script falls back to placeholder defaults that won't work until you customize them.
+
+---
+
+### Skills
+
+Skills are invokable actions in Claude Code. Use them with `/skill-name` in the Claude Code prompt.
+
+#### snapshot-branch (`/snapshot-branch`)
+
+**Purpose:** Commit current state and create a named branch at that point, then continue on main. Useful for preserving a working version before making breaking changes.
+
+**How it works:**
+1. Shows you `git status`
+2. Asks for commit message (never auto-generates)
+3. Asks for branch name (never auto-generates)
+4. Shows exact commands before running
+5. Pushes both main and the snapshot branch
+6. Tells you how to retrieve the snapshot later
+
+#### spec-interview (`/spec-interview`)
+
+**Purpose:** Interactive interview to create a detailed specification document. Useful when you need to think through requirements before coding.
+
+**How it works:**
+1. Asks probing, non-obvious questions about your feature/project
+2. Covers technical implementation, UI/UX, tradeoffs, edge cases
+3. Keeps interviewing until the picture is complete
+4. Writes a comprehensive spec file
+
+**Usage:**
+```
+/spec-interview build a CLI tool for log parsing
+```
+
+---
+
+### Ghostty Config
+
+**Location:** `~/.config/ghostty/config`
+**Purpose:** Terminal emulator configuration for Ghostty.
+
+**Key settings:**
+| Setting | Value | Notes |
+|---------|-------|-------|
+| Font | JetBrainsMono Nerd Font, 14pt | Requires Nerd Font install |
+| Theme | Catppuccin Mocha | Dark theme |
+| Background | 90% opacity, blur 20 | Translucent with blur |
+| Titlebar | Transparent | Clean macOS look |
+| Scrollback | 25MB | Generous for long Claude sessions |
+| Quick Terminal | Ctrl+\` | Quake-style dropdown from top |
+| Window State | Always saved | Restores layout on relaunch |
+
+---
+
+## Ghostty SAND Keybindings
+
+A mnemonic for the four categories of panel operations:
+
+### S -- Split (create new panels)
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+D` | Split right (vertical) |
+| `Cmd+Shift+D` | Split down (horizontal) |
+
+### A -- Across (move between tabs)
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+T` | New tab |
+| `Cmd+Shift+Left` | Previous tab |
+| `Cmd+Shift+Right` | Next tab |
+
+### N -- Navigate (jump between splits)
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+Alt+Left` | Focus split to the left |
+| `Cmd+Alt+Right` | Focus split to the right |
+| `Cmd+Alt+Up` | Focus split above |
+| `Cmd+Alt+Down` | Focus split below |
+| `Cmd+Shift+E` | Equalize all splits |
+| `Cmd+Shift+F` | Zoom/unzoom current split |
+
+### D -- Destroy (close panels)
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+W` | Close current panel/tab |
+
+### Other Useful Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+\`` | Toggle quick terminal (global) |
+| `Cmd+Shift+,` | Reload config |
+| `Cmd+Shift+P` | Command palette |
+| `Cmd+F` | Search scrollback (Ghostty 1.3+) |
+| `Cmd+Plus` | Increase font size |
+| `Cmd+Minus` | Decrease font size |
+| `Cmd+0` | Reset font size |
+
+---
+
+## Customization
+
+### Change the Ghostty theme
+
+Edit `ghostty/config` and change the `theme` line:
+```
+theme = Catppuccin Mocha       # dark
+theme = Catppuccin Latte       # light
+theme = light:Catppuccin Latte,dark:Catppuccin Mocha  # auto-switch with system
+```
+Reload with `Cmd+Shift+,` (no restart needed).
+
+### Change font size
+
+Edit `ghostty/config`:
+```
+font-size = 16
+```
+
+### Change background opacity
+
+Edit `ghostty/config`:
+```
+background-opacity = 1.0    # fully opaque
+background-opacity = 0.85   # more transparent
+```
+
+### Change Claude Code model
+
+Edit `claude/settings.json`:
+```json
+"model": "sonnet"
+```
+Options: `"opus"`, `"opus[1m]"`, `"sonnet"`, `"haiku"`
+
+### Add more auto-approved permissions
+
+Just use Claude Code normally. When it asks for permission to run a command and you click "Allow", it gets added to `settings.local.json` automatically.
+
+---
+
+## Updating
+
+### If you used copy mode (default)
+
+Files are independent copies. To pull upstream changes:
+```bash
+cd ~/claude-code-config
+git pull
+./install.sh          # re-copies files, backs up your local versions as .bak
+```
+
+To push local changes back to the repo:
+```bash
+# copy the changed file back into the repo
+cp ~/.claude/settings.json ~/claude-code-config/claude/settings.json
+cd ~/claude-code-config
+git add . && git commit -m "update settings" && git push
+```
+
+### If you used symlink mode
+
+Live config points directly into the repo. Changes propagate instantly both ways.
+```bash
+# pull upstream changes (auto-updates live config)
+cd ~/claude-code-config
+git pull
+
+# push local changes (just commit, the file is already in the repo)
+cd ~/claude-code-config
+git add . && git commit -m "update settings" && git push
+```
+
+---
+
+## Uninstall
+
+Remove installed files and restore backups:
+
+```bash
+# remove installed files (works for both copy and symlink mode)
+rm -f ~/.claude/CLAUDE.md
+rm -f ~/.claude/settings.json
+rm -f ~/.claude/settings.local.json
+rm -f ~/.claude/statusline-command.sh
+rm -f ~/.claude/ccusage-compact.py
+rm -f ~/.claude/ccusage-compact.sh
+rm -f ~/.claude/agents/pdf-to-markdown.md
+rm -f ~/.claude/commands/chrome-js.md
+rm -f ~/.claude/scripts/confluence-update.py
+rm -f ~/.claude/skills/snapshot-branch.md
+rm -f ~/.claude/skills/spec-interview.md
+rm -f ~/.config/ghostty/config
+
+# restore backups (if they exist)
+for f in ~/.claude/*.bak ~/.claude/**/*.bak ~/.config/ghostty/*.bak; do
+    [ -f "$f" ] && mv "$f" "${f%.bak}"
+done
+```
+
+---
+
+## Troubleshooting
+
+### Statusline not showing
+
+1. Check jq is installed: `jq --version`
+2. Check the script is linked: `ls -la ~/.claude/statusline-command.sh`
+3. Check settings.json has the statusline config:
+   ```bash
+   cat ~/.claude/settings.json | jq .statusLine
+   ```
+4. Restart Claude Code
+
+### Ghostty font looks wrong
+
+JetBrains Mono Nerd Font is probably not installed:
+```bash
+brew install --cask font-jetbrains-mono-nerd-font
+```
+Then restart Ghostty (or `Cmd+Shift+,` to reload config).
+
+### Quick terminal not working
+
+The `Ctrl+`` shortcut is a global hotkey. If another app captures it first, it won't work. Check System Settings > Keyboard > Keyboard Shortcuts for conflicts.
+
+### Symlink broken after moving the repo
+
+If you move the cloned repo to a different path, re-run `./install.sh` to recreate the symlinks.
+
+### Permissions accumulating junk
+
+If `settings.local.json` has too many entries, you can reset it:
+```bash
+# back up current
+cp ~/.claude/settings.local.json ~/.claude/settings.local.json.bak
+
+# re-link the clean version from this repo
+./install.sh
+```
+Permissions will re-accumulate as you use Claude Code.

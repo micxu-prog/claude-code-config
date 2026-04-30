@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(file:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(cat:*)",
+      "Bash(sort:*)",
+      "Bash(md5:*)",
+      "Bash(rsync:*)",
+      "Bash(xargs:*)",
+      "Bash(python3:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(pip3 install:*)",
+      "Bash(brew --version:*)",
+      "Bash(brew search:*)",
+      "Bash(git init:*)",
+      "Bash(git lfs:*)",
+      "Bash(git lfs track:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git branch:*)",
+      "Bash(git config:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Skill(drawio)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:code.claude.com)",
+      "WebFetch(domain:grafana.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:gist.githubusercontent.com)",
+      "WebFetch(domain:www.reddit.com)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:docs.aws.amazon.com)",
+      "WebFetch(domain:opentelemetry-python.readthedocs.io)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": true
+  }
+}
