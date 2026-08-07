@@ -1,0 +1,45 @@
+// Zellij config for Copilot CLI-first agentic coding on Windows.
+// Installed to: C:\Users\t-michaelxu\.config\zellij\config.kdl
+//
+// Start in locked/pass-through mode so Copilot owns input by default. Press
+// Ctrl+g to unlock Zellij controls, then Ctrl+g again to return to Copilot.
+
+on_force_close "detach"
+simplified_ui true
+default_mode "locked"
+pane_frames true
+mouse_mode true
+scroll_buffer_size 50000
+copy_command "clip.exe"
+copy_clipboard "system"
+copy_on_select true
+show_startup_tips false
+show_release_notes false
+session_serialization true
+pane_viewport_serialization false
+attach_to_session true
+session_name "agentic"
+
+env {
+    ZELLIJ "1"
+}
+
+ui {
+    pane_frames {
+        rounded_corners true
+        hide_session_name false
+    }
+}
+
+keybinds {
+    normal {
+        bind "Ctrl g" { SwitchToMode "Locked"; }
+        bind "Alt c" { Copy; }
+    }
+    locked {
+        bind "Ctrl g" { SwitchToMode "Normal"; }
+    }
+    scroll {
+        bind "Alt c" { Copy; }
+    }
+}

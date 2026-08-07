@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ado": {
+      "type": "stdio",
+      "command": "C:\\Users\\t-michaelxu\\.copilot\\ado-mcp.cmd",
+      "args": [],
+      "tools": [
+        "*"
+      ]
+    }
+  }
+}

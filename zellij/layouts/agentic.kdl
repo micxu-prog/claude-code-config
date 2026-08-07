@@ -1,0 +1,32 @@
+// Agentic coding layout. Start from this repo with:
+// zellij --layout agentic
+//
+// Zellij starts in locked/pass-through mode so Copilot owns input by default.
+// Press Ctrl+g to unlock Zellij controls, manage panes/tabs, then Ctrl+g again
+// to return input control to Copilot.
+
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:tab-bar"
+        }
+        children
+        pane size=2 borderless=true {
+            plugin location="zellij:status-bar"
+        }
+    }
+
+    tab name="agent" focus=true split_direction="vertical" {
+        pane name="copilot" command="cmd.exe" focus=true {
+            args "/d" "/c" "%USERPROFILE%\\bin\\orz-zellij.cmd"
+        }
+        pane size="35%" split_direction="horizontal" {
+            pane name="shell"
+            pane name="git"
+        }
+    }
+
+    tab name="shell" {
+        pane name="shell"
+    }
+}

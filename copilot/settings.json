@@ -1,0 +1,23 @@
+{
+  "model": "auto",
+  "showReasoning": false,
+  "theme": "dark",
+  "keepAlive": "busy",
+  "includeCoAuthoredBy": true,
+  "terminalProgress": false,
+  "updateTerminalTitle": false,
+  "logLevel": "all",
+  "footer": {
+    "showModelEffort": true,
+    "showDirectory": true,
+    "showBranch": true,
+    "showContextWindow": true,
+    "showQuota": true,
+    "showAgent": true
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "C:\\Users\\t-michaelxu\\.copilot\\statusline-command.cmd"
+  },
+  "mouse": true
+}

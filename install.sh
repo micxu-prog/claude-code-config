@@ -153,6 +153,8 @@ install_file "$SCRIPT_DIR/claude/scripts/confluence-update.py" "$CLAUDE_DIR/scri
 # skills
 install_file "$SCRIPT_DIR/claude/skills/snapshot-branch.md"   "$CLAUDE_DIR/skills/snapshot-branch.md"
 install_file "$SCRIPT_DIR/claude/skills/spec-interview.md"    "$CLAUDE_DIR/skills/spec-interview.md"
+# grill-me: upstream https://github.com/RobMitt/grill-me-skill (claude expects skills/<name>/SKILL.md)
+install_file "$SCRIPT_DIR/claude/skills/grill-me.md"          "$CLAUDE_DIR/skills/grill-me/SKILL.md"
 
 echo ""
 

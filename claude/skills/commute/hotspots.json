@@ -1,0 +1,13 @@
+{
+  "_comment": "Cached phone hotspots for the commute skill. 'default' picks which one preflight.ps1 connects to when no -Ssid is passed. Passwords stored in plaintext for one-command reconnect convenience - this file is local to the machine.",
+  "default": "miguel",
+  "corpProfile": "MSFTCONNECT",
+  "hotspots": {
+    "miguel": {
+      "ssid": "miguel",
+      "password": "12345678",
+      "owner": "iPhone personal hotspot",
+      "note": "Keep iPhone Settings > Personal Hotspot screen open until laptop connects, else it stops broadcasting."
+    }
+  }
+}

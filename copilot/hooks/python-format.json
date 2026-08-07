@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "type": "command",
+        "powershell": "& \"$env:USERPROFILE\\.copilot\\hooks\\format-python.ps1\"",
+        "timeoutSec": 60
+      }
+    ]
+  }
+}

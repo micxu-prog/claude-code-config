@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "plan-interview",
+  "owner": "gzupark",
+  "repo": "claude-plugin-pack",
+  "path": "plugins/hello-world/skills/plan-interview",
+  "branch": "main",
+  "sha": "a83d6a13ee54f468df15e7c9a8d5c85eba56ec2f",
+  "source": "manual"
+}

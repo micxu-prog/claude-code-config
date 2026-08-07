@@ -1,0 +1,9 @@
+@echo off
+set NO_COLOR=1
+set CLICOLOR=0
+set FORCE_COLOR=
+set COPILOT_CLI_DISABLE_COLOR=1
+set COPILOT_DISABLE_TERMINAL_TITLE=1
+set ZELLIJ=1
+
+call "%USERPROFILE%\bin\orz.cmd" %*
